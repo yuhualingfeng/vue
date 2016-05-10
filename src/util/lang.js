@@ -50,6 +50,10 @@ export function del (obj, key) {
   delete obj[key]
   var ob = obj.__ob__
   if (!ob) {
+    if (obj._isVue) {
+      delete obj._data[key]
+      obj._digest()
+    }
     return
   }
   ob.dep.notify()
@@ -82,7 +86,7 @@ export function hasOwn (obj, key) {
  * @return {Boolean}
  */
 
-var literalValueRE = /^\s?(true|false|[\d\.]+|'[^']*'|"[^"]*")\s?$/
+var literalValueRE = /^\s?(true|false|-?[\d\.]+|'[^']*'|"[^"]*")\s?$/
 export function isLiteral (exp) {
   return literalValueRE.test(exp)
 }
@@ -299,7 +303,7 @@ export function isPlainObject (obj) {
 export const isArray = Array.isArray
 
 /**
- * Define a non-enumerable property
+ * Define a property.
  *
  * @param {Object} obj
  * @param {String} key

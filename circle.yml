@@ -1,11 +1,12 @@
 machine:
   node:
-    version: 4
+    version: 5
 
 general:
   branches:
-    ignore:
-      - dev
+    only:
+      - master
+      - next
 
 test:
   override:

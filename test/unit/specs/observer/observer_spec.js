@@ -4,14 +4,8 @@ var Observer = ob.Observer
 var observe = ob.observe
 var Dep = require('src/observer/dep')
 var _ = require('src/util')
-var config = require('src/config')
 
 describe('Observer', function () {
-
-  beforeEach(function () {
-    spyWarns()
-  })
-
   it('create on non-observables', function () {
     // skip primitive value
     var ob = observe(1)
@@ -60,9 +54,6 @@ describe('Observer', function () {
   })
 
   it('create on already observed object', function () {
-    var previousConvertAllProperties = config.convertAllProperties
-    config.convertAllProperties = true
-
     // on object
     var obj = {}
     var val = 0
@@ -98,14 +89,9 @@ describe('Observer', function () {
     // should call underlying setter
     obj.a = 10
     expect(val).toBe(10)
-
-    config.convertAllProperties = previousConvertAllProperties
   })
 
   it('create on property with only getter', function () {
-    var previousConvertAllProperties = config.convertAllProperties
-    config.convertAllProperties = true
-
     // on object
     var obj = {}
     Object.defineProperty(obj, 'a', {
@@ -135,14 +121,9 @@ describe('Observer', function () {
       obj.a = 101
     } catch (e) {}
     expect(obj.a).toBe(123)
-
-    config.convertAllProperties = previousConvertAllProperties
   })
 
   it('create on property with only setter', function () {
-    var previousConvertAllProperties = config.convertAllProperties
-    config.convertAllProperties = true
-
     // on object
     var obj = {}
     var val = 10
@@ -169,14 +150,9 @@ describe('Observer', function () {
     // writes should call the set function
     obj.a = 100
     expect(val).toBe(100)
-
-    config.convertAllProperties = previousConvertAllProperties
   })
 
   it('create on property which is marked not configurable', function () {
-    var previousConvertAllProperties = config.convertAllProperties
-    config.convertAllProperties = true
-
     // on object
     var obj = {}
     Object.defineProperty(obj, 'a', {
@@ -189,8 +165,6 @@ describe('Observer', function () {
     expect(ob instanceof Observer).toBe(true)
     expect(ob.value).toBe(obj)
     expect(obj.__ob__).toBe(ob)
-
-    config.convertAllProperties = previousConvertAllProperties
   })
 
   it('create on array', function () {
@@ -238,9 +212,6 @@ describe('Observer', function () {
   })
 
   it('observing object prop change on defined property', function () {
-    var previousConvertAllProperties = config.convertAllProperties
-    config.convertAllProperties = true
-
     var obj = { val: 2 }
     Object.defineProperty(obj, 'a', {
       configurable: true,
@@ -272,8 +243,6 @@ describe('Observer', function () {
     expect(obj.val).toBe(3) // make sure 'setter' was called
     obj.val = 5
     expect(obj.a).toBe(5) // make sure 'getter' was called
-
-    config.convertAllProperties = previousConvertAllProperties
   })
 
   it('observing set/delete', function () {
@@ -315,6 +284,25 @@ describe('Observer', function () {
     _.del(obj3, 'a')
     expect(_.hasOwn(obj3, 'a')).toBe(false)
     expect(dep3.notify.calls.count()).toBe(2)
+  })
+
+  it('observing set/delete in Vm object', function (done) {
+    var el = document.createElement('div')
+    var vm = new Vue({
+      el: el,
+      template: '<div>{{a}}</div>',
+      data: { a: 1 }
+    })
+    expect(el.innerHTML).toBe('<div>1</div>')
+    Vue.set(vm, 'a', 2)
+    Vue.nextTick(function () {
+      expect(el.innerHTML).toBe('<div>2</div>')
+      Vue.delete(vm, 'a')
+      Vue.nextTick(function () {
+        expect(el.innerHTML).toBe('<div></div>')
+        done()
+      })
+    })
   })
 
   it('observing array mutation', function () {
@@ -382,5 +370,4 @@ describe('Observer', function () {
     expect(dep2.notify).toHaveBeenCalled()
     _.hasProto = true
   })
-
 })

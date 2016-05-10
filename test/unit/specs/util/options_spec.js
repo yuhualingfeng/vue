@@ -4,11 +4,6 @@ var merge = _.mergeOptions
 var resolveAsset = _.resolveAsset
 
 describe('Util - Option merging', function () {
-
-  beforeEach(function () {
-    spyWarns()
-  })
-
   it('default strat', function () {
     // child undefined
     var res = merge({replace: true}, {}).replace
@@ -41,7 +36,6 @@ describe('Util - Option merging', function () {
   })
 
   it('events', function () {
-
     // no parent
     res = merge({}, {events: 1})
     expect(res.events).toBe(1)
@@ -146,7 +140,7 @@ describe('Util - Option merging', function () {
       components: null
     }, {
       components: {
-        test: { template: 'hi' }
+        test: { template: 'foo' }
       }
     })
     expect(typeof res.components.test).toBe('function')
@@ -158,18 +152,18 @@ describe('Util - Option merging', function () {
       components: null
     }, {
       components: {
-        a: { template: 'hi' }
+        a: { template: 'foo' }
       }
     })
-    expect(hasWarned('Do not use built-in or reserved HTML elements as component id: a')).toBe(true)
+    expect('Do not use built-in or reserved HTML elements as component id: a').toHaveBeenWarned()
     merge({
       components: null
     }, {
       components: {
-        slot: { template: 'hi' }
+        slot: { template: 'foo' }
       }
     })
-    expect(hasWarned('Do not use built-in or reserved HTML elements as component id: slot')).toBe(true)
+    expect('Do not use built-in or reserved HTML elements as component id: slot').toHaveBeenWarned()
   })
 
   it('should ignore non-function el & data in class merge', function () {
@@ -181,7 +175,7 @@ describe('Util - Option merging', function () {
   it('class el merge', function () {
     function fn1 () {}
     function fn2 () {}
-    var res = merge({el: fn1}, {el: fn2})
+    var res = merge({ el: fn1 }, { el: fn2 })
     expect(res.el).toBe(fn2)
   })
 
@@ -193,14 +187,14 @@ describe('Util - Option merging', function () {
       return { a: 2, b: 3, d: { f: 2 }}
     }
     // both present
-    var res = merge({data: fn1}, {data: fn2}).data()
+    var res = merge({ data: fn1 }, { data: fn2 }).data()
     expect(res.a).toBe(2)
     expect(res.b).toBe(3)
     expect(res.c).toBe(4)
     expect(res.d.e).toBe(1)
     expect(res.d.f).toBe(2)
     // only parent
-    res = merge({data: fn1}, {}).data()
+    res = merge({ data: fn1 }, {}).data()
     expect(res.a).toBe(1)
     expect(res.b).toBeUndefined()
     expect(res.c).toBe(4)
@@ -219,16 +213,16 @@ describe('Util - Option merging', function () {
       return 2
     }
     // both functions
-    var res = merge({el: fn1}, {el: fn2}, vm)
+    var res = merge({ el: fn1 }, { el: fn2 }, vm)
     expect(res.el).toBe(2)
     // direct instance el
-    res = merge({el: fn1}, {el: 2}, vm)
+    res = merge({ el: fn1 }, { el: 2 }, vm)
     expect(res.el).toBe(2)
     // no parent
-    res = merge({}, {el: 2}, vm)
+    res = merge({}, { el: 2 }, vm)
     expect(res.el).toBe(2)
     // no child
-    res = merge({el: fn1}, {}, vm)
+    res = merge({ el: fn1 }, {}, vm)
     expect(res.el).toBe(1)
   })
 
@@ -269,7 +263,9 @@ describe('Util - Option merging', function () {
     observe(instanceData)
     var res = merge(
       {
-        data: function () { return { b: 234} }
+        data: function () {
+          return { b: 234 }
+        }
       },
       {
         data: instanceData
@@ -280,6 +276,20 @@ describe('Util - Option merging', function () {
     expect(data.a).toBe(123)
     expect(data.b).toBe(234)
     expect(Object.getOwnPropertyDescriptor(data, 'b').get).toBeTruthy()
+  })
+
+  it('extends', function () {
+    var f1 = function () {}
+    var f2 = function () {}
+    var f3 = function () {}
+    var componentA = Vue.extend({ template: 'foo', methods: { f1: f1, f2: function () {} }})
+    var componentB = { extends: componentA, methods: { f2: f2 }}
+    var componentC = { extends: componentB, template: 'bar', methods: { f3: f3 }}
+    var res = merge({}, componentC)
+    expect(res.template).toBe('bar')
+    expect(res.methods.f1).toBe(f1)
+    expect(res.methods.f2).toBe(f2)
+    expect(res.methods.f3).toBe(f3)
   })
 
   it('mixins', function () {
@@ -335,7 +345,7 @@ describe('Util - Option merging', function () {
       components: [{}]
     }
     merge(a, b)
-    expect(hasWarned('must provide a "name" or "id" field')).toBe(true)
+    expect('must provide a "name" or "id" field').toHaveBeenWarned()
   })
 
   it('warn Array async component without id', function () {
@@ -348,26 +358,24 @@ describe('Util - Option merging', function () {
       components: [function () {}]
     }
     merge(a, b)
-    expect(hasWarned('must provide a "name" or "id" field')).toBe(true)
+    expect('must provide a "name" or "id" field').toHaveBeenWarned()
   })
-
 })
 
 describe('Util - Option resolveAsset', function () {
-
   var vm
   beforeEach(function () {
     vm = new Vue({
       data: {},
       components: {
         'hyphenated-component': {
-          template: 'hi'
+          template: 'foo'
         },
         camelCasedComponent: {
-          template: 'yo'
+          template: 'bar'
         },
         PascalCasedComponent: {
-          template: 'ho'
+          template: 'baz'
         }
       }
     })
@@ -378,5 +386,4 @@ describe('Util - Option resolveAsset', function () {
     expect(resolveAsset(vm.$options, 'components', 'camel-cased-component')).toBeTruthy()
     expect(resolveAsset(vm.$options, 'components', 'pascal-cased-component')).toBeTruthy()
   })
-
 })

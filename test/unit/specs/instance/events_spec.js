@@ -2,16 +2,13 @@ var Vue = require('src')
 var _ = require('src/util')
 
 describe('Instance Events', function () {
-
   var spy, spy2
   beforeEach(function () {
     spy = jasmine.createSpy()
     spy2 = jasmine.createSpy()
-    spyWarns()
   })
 
   describe('option events', function () {
-
     it('normal events', function () {
       var vm = new Vue({
         events: {
@@ -47,13 +44,11 @@ describe('Instance Events', function () {
       vm.$emit('test', 123)
       expect(spy).toHaveBeenCalledWith(123)
       vm.$emit('test2')
-      expect(hasWarned('Unknown method')).toBe(true)
+      expect('Unknown method').toHaveBeenWarned()
     })
-
   })
 
   describe('option watchers', function () {
-
     it('normal', function (done) {
       var spyA = jasmine.createSpy()
       var spyB = jasmine.createSpy()
@@ -114,11 +109,9 @@ describe('Instance Events', function () {
         done()
       })
     })
-
   })
 
   describe('hooks', function () {
-
     it('created', function () {
       var ctx
       var vm = new Vue({
@@ -213,6 +206,7 @@ describe('Instance Events', function () {
     })
 
     it('compile v-on on child component', function () {
+      var spy2 = jasmine.createSpy()
       var vm = new Vue({
         el: document.createElement('div'),
         template: '<comp v-on:hook:created="onCreated" @ready="onReady" @ok="a++"></comp>',
@@ -228,13 +222,28 @@ describe('Instance Events', function () {
             compiled: function () {
               this.$emit('ready', 123)
               this.$emit('ok')
+              this.$parent.onReady = spy2
+              this.$emit('ready', 234)
             }
           }
         }
       })
       expect(spy.calls.count()).toBe(2)
       expect(spy).toHaveBeenCalledWith(123)
+      expect(spy2.calls.count()).toBe(1)
+      expect(spy2).toHaveBeenCalledWith(234)
       expect(vm.a).toBe(1)
+    })
+
+    it('warn missing handler for child component v-on', function () {
+      new Vue({
+        el: document.createElement('div'),
+        template: '<comp @test="onThat"></comp>',
+        components: {
+          comp: {}
+        }
+      })
+      expect('v-on:test="onThat" expects a function value').toHaveBeenWarned()
     })
 
     it('passing $arguments', function () {
@@ -256,7 +265,6 @@ describe('Instance Events', function () {
     })
 
     describe('attached/detached', function () {
-
       it('in DOM', function () {
         var el = document.createElement('div')
         var childEl = document.createElement('div')

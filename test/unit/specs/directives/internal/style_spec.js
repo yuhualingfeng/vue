@@ -18,7 +18,6 @@ function checkPrefixedProp (prop) {
 }
 
 describe(':style', function () {
-
   var el, dir
   beforeEach(function () {
     el = document.createElement('div')
@@ -113,7 +112,7 @@ describe(':style', function () {
     el.setAttribute(':style', 'divStyling')
     var vm = new Vue({
       el: el,
-      data: {divStyling: { display: 'none'}}
+      data: {divStyling: { display: 'none' }}
     })
     expect(el.style.display).toBe('none')
     vm.divStyling.display = 'block'
@@ -121,5 +120,11 @@ describe(':style', function () {
       expect(el.style.display).toBe('block')
       done()
     })
+  })
+
+  // #2654
+  it('background size with only one value', function () {
+    dir.update({ backgroundSize: '100%' })
+    expect(el.style.cssText.replace(/\s/g, '')).toMatch(/background-size:100%(auto)?;/)
   })
 })

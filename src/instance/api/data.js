@@ -3,12 +3,11 @@ import { del, toArray } from '../../util/index'
 import { parseText } from '../../parsers/text'
 import { parseDirective } from '../../parsers/directive'
 import { getPath } from '../../parsers/path'
-import { isSimplePath, parseExpression } from '../../parsers/expression'
+import { parseExpression } from '../../parsers/expression'
 
 const filterRE = /[^|]\|[^|]/
 
 export default function (Vue) {
-
   /**
    * Get the value from an expression on this vm.
    *
@@ -20,12 +19,13 @@ export default function (Vue) {
   Vue.prototype.$get = function (exp, asStatement) {
     var res = parseExpression(exp)
     if (res) {
-      if (asStatement && !isSimplePath(exp)) {
+      if (asStatement) {
         var self = this
         return function statementHandler () {
           self.$arguments = toArray(arguments)
-          res.get.call(self, self)
+          var result = res.get.call(self, self)
           self.$arguments = null
+          return result
         }
       } else {
         try {
@@ -161,8 +161,14 @@ export default function (Vue) {
     }
     // include computed fields
     if (!path) {
-      for (var key in this.$options.computed) {
+      var key
+      for (key in this.$options.computed) {
         data[key] = clean(this[key])
+      }
+      if (this._props) {
+        for (key in this._props) {
+          data[key] = clean(this[key])
+        }
       }
     }
     console.log(data)

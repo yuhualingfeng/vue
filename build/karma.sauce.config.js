@@ -64,7 +64,6 @@ var batches = [
 ]
 
 module.exports = function (config) {
-
   var batch = batches[process.argv[4] || 0]
 
   config.set(assign(base, {
@@ -74,7 +73,7 @@ module.exports = function (config) {
     sauceLabs: {
       testName: 'Vue.js unit tests',
       recordScreenshots: false,
-      build: process.env.CIRCLE_BUILD_NUM || Date.now()
+      build: process.env.CIRCLE_BUILD_NUM || process.env.SAUCE_BUILD_ID || Date.now()
     },
     // mobile emulators are really slow
     captureTimeout: 300000,

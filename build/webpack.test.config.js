@@ -17,7 +17,12 @@ module.exports = {
       {
         test: /\.js$/,
         loader: 'babel',
-        exclude: /test\/unit|node_modules/
+        // NOTE: use absolute path to make sure
+        // running tests is OK even if it is in node_modules of other project
+        exclude: [
+          path.resolve(__dirname, '../test/unit'),
+          path.resolve(__dirname, '../node_modules')
+        ]
       }
     ]
   },
@@ -36,5 +41,5 @@ module.exports = {
     contentBase: './test/unit',
     noInfo: true
   },
-  devtool: '#source-map'
+  devtool: 'source-map'
 }
